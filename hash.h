@@ -115,7 +115,7 @@ u_int64 hash::genFingerprint(u_int32 hv)
 	u_int64 tag;
     tag = hv & ((1ULL << bits_per_item) - 1);
     tag += (tag == 0);
-    printf("fingerprint is %u\n", tag);
+    //printf("fingerprint is %u\n", tag);
 	return tag;
 }
 
@@ -131,6 +131,8 @@ u_int64 hash::IndexHash(u_int32 hv)
 void hash::genIndexTagHash(fiveTuple_t pkt, size_t* tag, size_t* index)
 {
 	u_int64 temp = AwareHash(pkt.str, 13, hasher, scale, hardener);
+	//printf("%u\n", temp%100);
+	//printf("111\n");
 	*index = IndexHash(temp >> 32);
     *tag = genFingerprint(temp);
 }

@@ -122,9 +122,6 @@ bool check1(int index, fiveTuple_t temp,fiveTuple_t *fiveTupleFuf)
 	return false;
 }
 
-
-
-
 char errbuf[PCAP_ERRBUF_SIZE];
 
 
@@ -246,17 +243,12 @@ void extracter::extract(char * fname, struct fiveTuple_t *fiveTupleFuf,u_int64 n
 					//printf("%d\n", this->pktCounter);
 					//printf("\n");
 				}
-
 			}
-
 		}
-
-
 		if(this->pktCounter == n)
 		{
 			break;
 		}
-
 	}
 	pcap_close(pcap);
 }
