@@ -103,6 +103,7 @@ public:
 	bool empty(size_t index);
 	size_t randKick(size_t index, size_t tag);
 	bool SearchTagInBucket(size_t index, size_t tag);
+	bool DeleteTagInBucket(size_t index, size_t tag);
 };
 
 bool table::Inserttobucket(size_t index, size_t tag)
@@ -143,6 +144,18 @@ bool table::SearchTagInBucket(size_t index, size_t tag)
 	return false;
 }
 
+bool table::DeleteTagInBucket(size_t index, size_t tag)
+{
+	for (int i = 0; i < kTagsPerBucket; i++)
+	{
+		if (Table[index][i].toTag() == tag)
+		{
+			Table[index][i].setTag(0);
+			return true;
+		}
+	}
+	return false;
+}
 
 class cuckoofilter
 {
@@ -167,6 +180,7 @@ public:
 	}
 	bool Insert(fiveTuple_t pkt);
 	bool Query(fiveTuple_t pkt);
+	bool Delete(fiveTuple_t pkt);
 };
 
 
@@ -237,52 +251,22 @@ bool cuckoofilter::Query(fiveTuple_t pkt)
 	return false;
 }
 
-struct fiveTuple_t pktTuplebuf[38000001];
-
-int main()
+bool cuckoofilter::Delete(fiveTuple_t pkt)
 {
-	srand(time(NULL));
-	int cnt = 0;
-	int x,y;
-	//x means the length of every "fingerprint"
-	//y means the capacity of this cuckoo filter, must be the power of 2
-	//every bucket can contain 4 "fingerprints", you may change this val at class "table"
+	size_t tag;
+	size_t index1;
 
-	printf("fingger + total\n");
-	//scanf("%d%d",&x,&y);
-	x = 2;
-	y = 32768;
-	cuckoofilter cf(x,y);
-	cf.Info();
-	char * fname = "test2.pcap";
-	extracter a;
-	a.extract(fname,pktTuplebuf,32768 * 2);
-	for (int i = 1; i <= 32768; i++)
+	Hashfamily.genIndexTagHash(pkt, &tag, &index1);
+	size_t index2 = Hashfamily.AlterIndexHash(index1, tag);
+
+	if (T.DeleteTagInBucket(index1, tag) == 1)
 	{
-		if (cf.Insert(pktTuplebuf[i]))
-		{
-			cnt++;
-		}
-		else
-		{
-			break;
-		}	
+		return true;
+	}
+	if (T.DeleteTagInBucket(index2, tag) == 1)
+	{
+		return true;
 	}
 
-	printf("total insert %d\n", cnt);
-
-	size_t errorcnt = 0;
-	size_t totalquery = 0;
-	for (int i = 32769; i <= 32768*2; i++)
-	{
-		if (cf.Query(pktTuplebuf[i]))
-		{
-			errorcnt++;
-		}
-		totalquery++;
-	}
-	printf("error time is %u\n", errorcnt);
-	double errorrate = (errorcnt * 1.0) / totalquery;
-	printf("the error rate is %.8lf\n", errorrate);
-	return 0;
+	return false;
 }
