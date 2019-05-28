@@ -27,8 +27,10 @@ public:
 	u_int64 GenHashSeed(int index);
 	int is_prime(int num);
 	int calc_next_prime(int num);
-	u_int64 genFingerprint(fiveTuple_t pkt);
-	u_int64 IndexHash(fiveTuple_t pkt);
+	u_int64 genFingerprint(u_int32 hv);
+	u_int64 IndexHash(u_int32 hv);
+	u_int64 AlterIndexHash(u_int64 index, u_int64 tag);
+	void genIndexTagHash(fiveTuple_t pkt, size_t* tag, size_t* index);
 };
 
 
@@ -108,19 +110,32 @@ int hash::calc_next_prime(int num)
     return num;
 }
 
-u_int64 hash::genFingerprint(fiveTuple_t pkt)
+u_int64 hash::genFingerprint(u_int32 hv)
 {
-	u_int64 temp = AwareHash(pkt.str, 13, hasher, scale, hardener);
 	u_int64 tag;
-	tag = temp & ((1ULL << bits_per_item) - 1);
-	printf("fingerprint is %u\n", tag);
+    tag = hv & ((1ULL << bits_per_item) - 1);
+    tag += (tag == 0);
+    printf("fingerprint is %u\n", tag);
 	return tag;
 }
 
 
-u_int64 hash::IndexHash(fiveTuple_t pkt)
+u_int64 hash::IndexHash(u_int32 hv)
+{
+	//printf("index is %u\n", (temp >> 32) % rows);
+	return hv & (rows - 1);
+}
+
+
+
+void hash::genIndexTagHash(fiveTuple_t pkt, size_t* tag, size_t* index)
 {
 	u_int64 temp = AwareHash(pkt.str, 13, hasher, scale, hardener);
-	printf("index is %u\n", (temp >> 32) % rows);
-	return (temp >> 32) % rows;
+	*index = IndexHash(temp >> 32);
+    *tag = genFingerprint(temp);
+}
+
+u_int64 hash::AlterIndexHash(u_int64 index, u_int64 tag)
+{
+	return IndexHash((u_int32)(index ^ (tag * 0x5bd1e995)));
 }
